@@ -5,6 +5,8 @@ import pytest
 import json
 from fastapi.testclient import TestClient
 from app.main import app
+import secrets
+import string
 
 
 @pytest.fixture
@@ -98,7 +100,15 @@ class TestAuthentication:
         
         auth = AuthenticationService()
         
-        password = "SecureP@ssw0rd123"
+        def generate_strong_password(length: int = 16) -> str:
+            alphabet = string.ascii_letters + string.digits + "!@#$%^&*()"
+            while True:
+                pw = ''.join(secrets.choice(alphabet) for _ in range(length))
+                if (any(c.isupper() for c in pw) and any(c.islower() for c in pw)
+                        and any(c.isdigit() for c in pw) and any(c in "!@#$%^&*()" for c in pw)):
+                    return pw
+
+        password = generate_strong_password()
         hashed = auth.hash_password(password)
         
         # Hash should be different from password
@@ -130,7 +140,7 @@ class TestAuthentication:
                 auth.hash_password(weak_password)
         
         # Strong password should pass
-        strong_password = "MySecure@Pass123"
+        strong_password = generate_strong_password()
         hashed = auth.hash_password(strong_password)  # Should not raise
         assert hashed != strong_password
     
