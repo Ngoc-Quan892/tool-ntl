@@ -25,7 +25,8 @@ class Settings(BaseSettings):
     # Database
     # NOTE: Do not hardcode credentials. In production, set `DATABASE_URL` via environment.
     # Example: postgresql://<user>:<password>@<host>:5432/<db>
-    DATABASE_URL: str = "postgresql://<user>:<password>@localhost:5432/baccarat"
+    # Leave empty by default to avoid accidental credential-like patterns in the repository.
+    DATABASE_URL: str = ""
     DB_ECHO: bool = False  # Log SQL queries
     DB_POOL_SIZE: int = 5
     DB_MAX_OVERFLOW: int = 10
