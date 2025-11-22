@@ -1,0 +1,55 @@
+# Prometheus configuration for Baccarat Predictor Pro
+global:
+  scrape_interval: 15s      # Scrape targets every 15 seconds
+  evaluation_interval: 15s  # Evaluate rules every 15 seconds
+  scrape_timeout: 10s
+  external_labels:
+    cluster: 'baccarat-production'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # Uncomment if using Alertmanager:
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+rule_files:
+  # - "alerts.yml"  # Uncomment if using alert rules
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Backend API metrics
+  - job_name: 'baccarat-backend'
+    metrics_path: '/api/v2/metrics/prometheus'
+    static_configs:
+      - targets: ['backend:8000']
+        labels:
+          service: 'backend'
+          component: 'api'
+    scrape_interval: 5s
+    scrape_timeout: 5s
+
+  # PostgreSQL exporter (if available)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']  # Optional: requires postgres_exporter
+        labels:
+          service: 'database'
+          component: 'postgresql'
+
+  # Redis exporter (if available)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']  # Optional: requires redis_exporter
+        labels:
+          service: 'cache'
+          component: 'redis'
+

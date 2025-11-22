@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #b0b0b0;
+        }
+        
+        select, input, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #333;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #4CAF50;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .status.connected {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .status.disconnected {
+            background: #f44336;
+            color: white;
+        }
+        
+        .status.connecting {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .messages {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .message {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-left: 3px solid #4CAF50;
+            background: #333;
+            border-radius: 4px;
+        }
+        
+        .message.error {
+            border-left-color: #f44336;
+        }
+        
+        .message.heartbeat {
+            border-left-color: #ff9800;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #b0b0b0;
+        }
+        
+        .message-type {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .message-data {
+            margin-top: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #b0b0b0;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 WebSocket Test Client</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="endpoint">Endpoint:</label>
+                <select id="endpoint">
+                    <option value="predictions">/ws/predictions</option>
+                    <option value="stats">/ws/stats</option>
+                    <option value="shoe">/ws/shoe/{shoe_id}</option>
+                </select>
+            </div>
+            
+            <div class="control-group" id="shoeIdGroup" style="display: none;">
+                <label for="shoeId">Shoe ID:</label>
+                <input type="text" id="shoeId" placeholder="Enter shoe ID">
+            </div>
+            
+            <div class="control-group">
+                <label for="url">WebSocket URL:</label>
+                <input type="text" id="url" value="ws://localhost:8000">
+            </div>
+            
+            <button id="connectBtn" onclick="connect()">Connect</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+        </div>
+        
+        <div id="status" class="status disconnected">Disconnected</div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="messageCount">0</div>
+                <div class="stat-label">Messages Received</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="reconnectCount">0</div>
+                <div class="stat-label">Reconnections</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="uptime">00:00</div>
+                <div class="stat-label">Uptime</div>
+            </div>
+        </div>
+        
+        <div class="messages" id="messages"></div>
+    </div>
+    
+    <script>
+        let ws = null;
+        let reconnectTimer = null;
+        let heartbeatTimer = null;
+        let reconnectInterval = 5000; // 5 seconds
+        let heartbeatInterval = 30000; // 30 seconds
+        let messageCount = 0;
+        let reconnectCount = 0;
+        let startTime = null;
+        let uptimeInterval = null;
+        
+        const endpointSelect = document.getElementById('endpoint');
+        const shoeIdGroup = document.getElementById('shoeIdGroup');
+        const shoeIdInput = document.getElementById('shoeId');
+        
+        endpointSelect.addEventListener('change', () => {
+            shoeIdGroup.style.display = endpointSelect.value === 'shoe' ? 'block' : 'none';
+        });
+        
+        function updateStatus(status, className) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = status;
+            statusEl.className = `status ${className}`;
+        }
+        
+        function addMessage(type, data, isError = false) {
+            const messagesEl = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${isError ? 'error' : ''} ${type === 'heartbeat' || type === 'pong' ? 'heartbeat' : ''}`;
+            
+            const header = document.createElement('div');
+            header.className = 'message-header';
+            header.innerHTML = `
+                <span class="message-type">${type}</span>
+                <span>${new Date().toLocaleTimeString()}</span>
+            `;
+            
+            const dataEl = document.createElement('div');
+            dataEl.className = 'message-data';
+            dataEl.textContent = JSON.stringify(data, null, 2);
+            
+            messageEl.appendChild(header);
+            messageEl.appendChild(dataEl);
+            messagesEl.insertBefore(messageEl, messagesEl.firstChild);
+            
+            // Keep only last 100 messages
+            while (messagesEl.children.length > 100) {
+                messagesEl.removeChild(messagesEl.lastChild);
+            }
+        }
+        
+        function updateStats() {
+            document.getElementById('messageCount').textContent = messageCount;
+            document.getElementById('reconnectCount').textContent = reconnectCount;
+        }
+        
+        function updateUptime() {
+            if (startTime) {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('uptime').textContent = 
+                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+        }
+        
+        function buildUrl() {
+            const baseUrl = document.getElementById('url').value;
+            const endpoint = endpointSelect.value;
+            
+            if (endpoint === 'shoe') {
+                const shoeId = shoeIdInput.value;
+                if (!shoeId) {
+                    alert('Please enter a shoe ID');
+                    return null;
+                }
+                return `${baseUrl}/ws/shoe/${shoeId}`;
+            }
+            
+            return `${baseUrl}/ws/${endpoint}`;
+        }
+        
+        function connect() {
+            const url = buildUrl();
+            if (!url) return;
+            
+            updateStatus('Connecting...', 'connecting');
+            
+            try {
+                ws = new WebSocket(url);
+                
+                ws.onopen = () => {
+                    updateStatus('Connected', 'connected');
+                    document.getElementById('connectBtn').disabled = true;
+                    document.getElementById('disconnectBtn').disabled = false;
+                    
+                    messageCount = 0;
+                    reconnectCount = 0;
+                    startTime = Date.now();
+                    updateStats();
+                    
+                    // Start uptime counter
+                    if (uptimeInterval) clearInterval(uptimeInterval);
+                    uptimeInterval = setInterval(updateUptime, 1000);
+                    
+                    // Start heartbeat
+                    startHeartbeat();
+                    
+                    addMessage('connected', { url });
+                };
+                
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        messageCount++;
+                        updateStats();
+                        
+                        addMessage(data.type || 'message', data);
+                    } catch (e) {
+                        addMessage('error', { error: 'Failed to parse message', raw: event.data }, true);
+                    }
+                };
+                
+                ws.onerror = (error) => {
+                    addMessage('error', { error: 'WebSocket error' }, true);
+                };
+                
+                ws.onclose = () => {
+                    updateStatus('Disconnected', 'disconnected');
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
+                    
+                    if (uptimeInterval) {
+                        clearInterval(uptimeInterval);
+                        uptimeInterval = null;
+                    }
+                    
+                    stopHeartbeat();
+                    
+                    // Auto-reconnect
+                    if (reconnectTimer) clearTimeout(reconnectTimer);
+                    reconnectTimer = setTimeout(() => {
+                        reconnectCount++;
+                        updateStats();
+                        addMessage('reconnect', { attempt: reconnectCount });
+                        connect();
+                    }, reconnectInterval);
+                };
+                
+            } catch (e) {
+                updateStatus('Connection Failed', 'disconnected');
+                addMessage('error', { error: e.message }, true);
+            }
+        }
+        
+        function disconnect() {
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+            
+            stopHeartbeat();
+            
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+        
+        function startHeartbeat() {
+            stopHeartbeat();
+            heartbeatTimer = setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'ping',
+                        timestamp: new Date().toISOString()
+                    }));
+                }
+            }, heartbeatInterval);
+        }
+        
+        function stopHeartbeat() {
+            if (heartbeatTimer) {
+                clearInterval(heartbeatTimer);
+                heartbeatTimer = null;
+            }
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,84 @@
+name: Auto Upgrade Dependencies
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1' # weekly on Monday 03:00 UTC
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Make scripts executable
+        run: |
+          chmod +x ./scripts/ci/*.sh || true
+
+      - name: Run dependency upgrade script
+        run: ./scripts/ci/upgrade_deps.sh
+
+      - name: Run security scans (backend + frontend)
+        run: |
+          ./scripts/ci/security_scan.sh
+
+      - name: Backend migration dry-run
+        run: |
+          ./scripts/ci/db_migration_dry_run.sh
+
+      - name: Run backend tests (containerized)
+        run: |
+          cd backend
+          pip install -r requirements-dev.txt
+          pytest -q
+
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm ci
+          npm test --silent
+
+      - name: Run smoke tests
+        run: |
+          ./scripts/ci/run_smoke_tests.sh
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(deps): automated upgrade by CI"
+          branch: "automation/upgrade-deps-$(date +%Y%m%d-%H%M%S)"
+          title: "Automated dependency upgrades"
+          body: "This PR upgrades backend and frontend dependencies automatically and runs tests and safety checks. Please review major version bumps before merging."
+          labels: |
+            automated
+            dependencies
+
+      - name: Check for major version bumps
+        id: check_bumps
+        run: |
+          chmod +x ./scripts/ci/check_major_bumps.sh || true
+          ./scripts/ci/check_major_bumps.sh
+
+      - name: Auto-merge PR when safe
+        if: ${{ steps.check_bumps.outputs.major_bump == 'False' || steps.check_bumps.outputs.major_bump == 'false' }}
+        uses: pascalgn/automerge-action@v0.14.3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # only merge when all checks pass
+          merge_method: squash

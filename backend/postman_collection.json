@@ -1,0 +1,258 @@
+{
+  "info": {
+    "name": "Baccarat Predictor Pro - API v2",
+    "description": "Complete API v2 collection for Baccarat Predictor Pro",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "baccarat-predictor"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "health"]
+            }
+          }
+        },
+        {
+          "name": "Database Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/health/db",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "health", "db"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Shoes",
+      "item": [
+        {
+          "name": "Create Shoe",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decks\": 8,\n  \"reshuffle_point\": 20\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v2/shoes/create",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "shoes", "create"]
+            }
+          }
+        },
+        {
+          "name": "Get Shoe State",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/shoes/{{shoe_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "shoes", "{{shoe_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Reset Shoe",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/shoes/{{shoe_id}}/reset",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "shoes", "{{shoe_id}}", "reset"]
+            }
+          }
+        },
+        {
+          "name": "Delete Shoe",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/shoes/{{shoe_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "shoes", "{{shoe_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Hands",
+      "item": [
+        {
+          "name": "Play Hand",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shoe_id\": null,\n  \"result\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v2/hands/play",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "hands", "play"]
+            }
+          }
+        },
+        {
+          "name": "Get Hand History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/hands/history?page=1&page_size=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "hands", "history"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "page_size", "value": "50"},
+                {"key": "shoe_id", "value": "", "disabled": true}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Specific Hand",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/hands/{{hand_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "hands", "{{hand_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Predictions",
+      "item": [
+        {
+          "name": "Get Prediction",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shoe_id\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v2/predictions/predict",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "predictions", "predict"]
+            }
+          }
+        },
+        {
+          "name": "Get Accuracy Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/predictions/accuracy",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "predictions", "accuracy"],
+              "query": [{"key": "shoe_id", "value": "", "disabled": true}]
+            }
+          }
+        },
+        {
+          "name": "Get Confidence Scores",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/predictions/confidence?limit=100",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "predictions", "confidence"],
+              "query": [{"key": "limit", "value": "100"}]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analysis",
+      "item": [
+        {
+          "name": "Get Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/analysis/statistics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "analysis", "statistics"],
+              "query": [{"key": "shoe_id", "value": "", "disabled": true}]
+            }
+          }
+        },
+        {
+          "name": "Get Pattern Analysis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/analysis/patterns?limit=100",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "analysis", "patterns"],
+              "query": [
+                {"key": "limit", "value": "100"},
+                {"key": "shoe_id", "value": "", "disabled": true}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Edge Calculation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v2/analysis/edge",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v2", "analysis", "edge"],
+              "query": [{"key": "shoe_id", "value": "", "disabled": true}]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "shoe_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "hand_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
+

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: baccarat-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: baccarat-backend
+  template:
+    metadata:
+      labels:
+        app: baccarat-backend
+    spec:
+      containers:
+      - name: backend
+        image: baccarat-backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: baccarat-secrets
+              key: database-url
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: baccarat-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: baccarat-frontend
+  template:
+    metadata:
+      labels:
+        app: baccarat-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: baccarat-frontend:latest
+        ports:
+        - containerPort: 5173
+

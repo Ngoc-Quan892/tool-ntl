@@ -1,0 +1,185 @@
+# Prometheus Alerting Rules for Predictive Cache Warming
+# 
+# Usage:
+#   - Add to Prometheus alerting_rules_files in prometheus.yml
+#   - Configure alertmanager for notifications
+#
+# Alert Channels:
+#   - Slack: #cache-optimization
+#   - PagerDuty: Cache Team
+#   - Email: ops-team@example.com
+
+groups:
+  - name: predictive_cache_warming
+    interval: 30s
+    rules:
+      # Alert: Prediction Accuracy Low
+      - alert: PredictionAccuracyLow
+        expr: predictive_cache_prediction_accuracy < 0.7
+        for: 30m
+        labels:
+          severity: warning
+          component: predictive_cache
+          team: cache-optimization
+        annotations:
+          summary: "Prediction accuracy is below threshold"
+          description: |
+            Prediction accuracy has been below 70% for 30 minutes.
+            Current accuracy: {{ $value | humanizePercentage }}
+            Action required: Retrain model, check feature quality, review access patterns.
+          runbook_url: "https://wiki.example.com/runbooks/prediction-accuracy-low"
+
+      # Alert: Model Drift Detected
+      - alert: ModelDriftDetected
+        expr: |
+          (
+            predictive_cache_prediction_accuracy
+            - (
+              predictive_cache_prediction_accuracy offset 1h
+            )
+          ) < -0.1
+        for: 15m
+        labels:
+          severity: warning
+          component: predictive_cache
+          team: cache-optimization
+        annotations:
+          summary: "Model drift detected - accuracy dropped significantly"
+          description: |
+            Model accuracy has dropped more than 10% from baseline.
+            Current accuracy: {{ $value | humanizePercentage }}
+            Previous accuracy (1h ago): {{ $value | humanizePercentage }}
+            Action required: Schedule model retraining, investigate data quality.
+          runbook_url: "https://wiki.example.com/runbooks/model-drift"
+
+      # Alert: Prediction Latency High
+      - alert: PredictionLatencyHigh
+        expr: |
+          histogram_quantile(0.95, 
+            rate(predictive_cache_prediction_latency_seconds_bucket[5m])
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: predictive_cache
+          team: cache-optimization
+        annotations:
+          summary: "Prediction latency is high (p95 > 500ms)"
+          description: |
+            P95 prediction latency is above 500ms for 10 minutes.
+            Current p95 latency: {{ $value | humanizeDuration }}
+            Action required: Check system load, optimize feature extraction, review model complexity.
+          runbook_url: "https://wiki.example.com/runbooks/prediction-latency"
+
+      # Alert: Model Training Failure
+      - alert: TrainingFailure
+        expr: |
+          rate(predictive_cache_model_training_failures_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: predictive_cache
+          team: cache-optimization
+        annotations:
+          summary: "Model training has failed"
+          description: |
+            Model training has failed.
+            Failure rate: {{ $value | humanizePercentage }}
+            Action required: Investigate training data quality, check system resources, review logs immediately.
+          runbook_url: "https://wiki.example.com/runbooks/training-failure"
+
+      # Alert: No Predictions Generated
+      - alert: NoPredictionsGenerated
+        expr: |
+          rate(predictive_cache_predictions_total[15m]) == 0
+        for: 15m
+        labels:
+          severity: warning
+          component: predictive_cache
+          team: cache-optimization
+        annotations:
+          summary: "No predictions generated in last 15 minutes"
+          description: |
+            Predictive cache warming has not generated any predictions.
+            This may indicate:
+            - Model not loaded
+            - Feature extraction failing
+            - Prediction service down
+            Action required: Check prediction service status, verify model is loaded.
+          runbook_url: "https://wiki.example.com/runbooks/no-predictions"
+
+      # Alert: Cache Hit Improvement Negative
+      - alert: CacheHitImprovementNegative
+        expr: predictive_cache_hit_improvement_percent < 0
+        for: 1h
+        labels:
+          severity: warning
+          component: predictive_cache
+          team: cache-optimization
+        annotations:
+          summary: "Cache hit rate improvement is negative"
+          description: |
+            Predictive warming is not improving cache hit rate.
+            Current improvement: {{ $value | humanizePercentage }}%
+            Action required: Review prediction accuracy, check warming strategy, consider disabling predictive warming.
+          runbook_url: "https://wiki.example.com/runbooks/negative-improvement"
+
+      # Alert: High Prediction Error Rate
+      - alert: HighPredictionErrorRate
+        expr: |
+          (
+            rate(predictive_cache_predictions_incorrect_total[5m])
+            /
+            rate(predictive_cache_predictions_total[5m])
+          ) > 0.3
+        for: 30m
+        labels:
+          severity: warning
+          component: predictive_cache
+          team: cache-optimization
+        annotations:
+          summary: "Prediction error rate is high (>30%)"
+          description: |
+            More than 30% of predictions are incorrect.
+            Error rate: {{ $value | humanizePercentage }}
+            Action required: Review model performance, check data quality, consider retraining.
+          runbook_url: "https://wiki.example.com/runbooks/high-error-rate"
+
+      # Alert: Feature Extraction Slow
+      - alert: FeatureExtractionSlow
+        expr: |
+          histogram_quantile(0.95,
+            rate(predictive_cache_feature_extraction_duration_seconds_bucket[5m])
+          ) > 0.1
+        for: 10m
+        labels:
+          severity: info
+          component: predictive_cache
+          team: cache-optimization
+        annotations:
+          summary: "Feature extraction is slow (p95 > 100ms)"
+          description: |
+            Feature extraction p95 latency is above 100ms.
+            Current p95: {{ $value | humanizeDuration }}
+            Action required: Optimize feature extraction code, check database query performance.
+          runbook_url: "https://wiki.example.com/runbooks/feature-extraction-slow"
+
+      # Alert: Warming Duration High
+      - alert: WarmingDurationHigh
+        expr: |
+          histogram_quantile(0.95,
+            rate(predictive_cache_warming_duration_seconds_bucket[5m])
+          ) > 5.0
+        for: 15m
+        labels:
+          severity: warning
+          component: predictive_cache
+          team: cache-optimization
+        annotations:
+          summary: "Cache warming duration is high (p95 > 5s)"
+          description: |
+            Cache warming p95 duration is above 5 seconds.
+            Current p95: {{ $value | humanizeDuration }}
+            Action required: Check cache backend performance, review warming batch size.
+          runbook_url: "https://wiki.example.com/runbooks/warming-duration"
+
