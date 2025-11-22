@@ -1,0 +1,53 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.db
+*.sqlite
+.env
+.env.local
+data/
+*.log
+coverage/
+.pytest_cache/
+dist/
+build/
+
+# ML
+*.pkl
+*.h5
+*.ckpt
+models/*.pt
+
+# Jupyter
+.ipynb_checkpoints/
+

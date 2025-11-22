@@ -1,0 +1,47 @@
+name: Test Suite
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+          pip install -r backend/requirements-dev.txt
+
+      - name: Run backend tests
+        working-directory: backend
+        run: |
+          pytest tests/ -v \
+            --cov=app \
+            --cov-report=xml \
+            --cov-report=term-missing
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v2
+        with:
+          file: backend/coverage.xml
+
+      - name: Performance tests
+        working-directory: backend
+        run: |
+          pytest tests/performance/test_performance.py -v --duration=10
+
+      - name: Security check
+        working-directory: backend
+        run: |
+          bandit -r app/ -ll
+          safety check
+

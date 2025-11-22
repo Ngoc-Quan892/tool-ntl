@@ -1,0 +1,45 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20251122005029
+Username: DESKTOP-4RBD3GV\thanh
+RunAs User: DESKTOP-4RBD3GV\thanh
+Configuration Name: 
+Machine: DESKTOP-4RBD3GV (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -Command chcp 65001; & '.\scripts\cleanup\auto_remove_and_push.ps1' -ReplacementsPath '.\replacements.txt'
+Process ID: 9364
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is C:\Users\thanh\Desktop\Tool NTL\auto-remove-log.txt
+Starting secret-removal workflow (git-filter-repo)
+Creating a full filesystem backup (Tool NTL.backup)
+Backup folder exists: C:\Users\thanh\Desktop\Tool NTL.backup
+Checking for git-filter-repo...
+Using git-filter-repo command: git-filter-repo
+Creating mirror clone: C:\Users\thanh\Desktop\Tool NTL\tool-ntl-mirror.git
+
+Running git-filter-repo with replacements file: C:\Users\thanh\Desktop\Tool NTL\replacements.txt
+
+Checking mirror for remaining 'hooks.slack.com' occurrences...
+git.exe : 00:50:31.409769 exec-cmd.c:266          trace: resolved executable dir: C:/Program Files/Git/mingw64/bin
+At C:\Users\thanh\Desktop\Tool NTL\scripts\cleanup\remove_secret_full.ps1:93 char:12
++   $found = & git grep -n "hooks.slack.com" --all 2>$null
++            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (00:50:31.409769...Git/mingw64/bin:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+00:50:31.418780 git.c:502               trace: built-in: git grep -n hooks.slack.com --all
+fatal: option '--all' must come before non-option arguments
+No occurrences of 'hooks.slack.com' found in mirror.
+Ready to force-push rewritten history to remote 'origin'.
+DryRun mode enabled -- skipping force-push. You can review the mirror at: C:\Users\thanh\Desktop\Tool NTL\tool-ntl-mirror.git
+DryRun finished.
+**********************
+Windows PowerShell transcript end
+End time: 20251122005031
+**********************
